@@ -19,6 +19,7 @@ const iconFor = (name) => ({ zap: "zap", wifi: "wifi", coins: "coins", wrench: "
 const formatIDR = (value, spaced = false) => `${spaced ? "Rp " : "Rp"}${Math.round(Number(value) || 0).toLocaleString("id-ID")}`;
 const formatSigned = (item) => `${item.type === "INCOME" ? "+" : "-"}${formatIDR(item.amount)}`;
 const formatDate = (value) => { if (!value) return ""; const date = new Date(`${value}T00:00:00`); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }); };
+const todayISO = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; };
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[character]));
 const byId = (id) => document.getElementById(id);
 const isAdmin = () => Boolean(currentSession && currentProfile?.role === "ADMIN");
@@ -30,10 +31,11 @@ function showLogin() {
 }
 
 function updateProfileUI() {
-  const label = currentProfile?.display_name || currentUser?.email?.split("@")[0] || "Admin kas";
+  const label = currentProfile?.display_name || currentUser?.email?.split("@")[0] || "Masuk admin";
   const initials = label.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "AK";
   [byId("profile-name"), byId("profile-name-sidebar")].forEach((element) => { if (element) element.textContent = label; });
   [byId("profile-avatar"), byId("profile-avatar-sidebar")].forEach((element) => { if (element) element.textContent = initials; });
+  if (byId("profile-action")) byId("profile-action").textContent = isAdmin() ? "Keluar" : "Masuk";
 }
 
 function unlockApp(session, profile) {
@@ -96,7 +98,7 @@ async function logoutAdmin() {
   showToast("Anda sudah keluar dari mode admin.");
 }
 
-byId("logout-button").addEventListener("click", logoutAdmin);
+byId("logout-button").addEventListener("click", () => isAdmin() ? logoutAdmin() : showLogin());
 byId("profile-button").addEventListener("click", () => isAdmin() ? logoutAdmin() : showLogin());
 byId("cancel-login").addEventListener("click", () => byId("login-screen").classList.remove("is-open"));
 
@@ -203,7 +205,7 @@ function toggleModal(open) {
   modal.classList.toggle("is-open", open);
   modal.setAttribute("aria-hidden", String(!open));
   if (open) {
-    byId("transaction-date").value = new Date().toISOString().slice(0, 10);
+    byId("transaction-date").value = todayISO();
     setTimeout(() => byId("transaction-title").focus(), 80);
   }
 }
