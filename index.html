@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#171A3D" />
+    <title>KasTEDS — Kas kontrakan lebih jelas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navigasi utama">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"><i data-lucide="home"></i></div>
+          <div><strong>KasTEDS</strong><span>Kas kontrakan</span></div>
+        </div>
+        <nav class="sidebar-nav">
+          <p class="nav-label">Menu utama</p>
+          <button class="nav-item is-active" data-view="dashboard"><i data-lucide="layout-dashboard"></i><span>Beranda</span></button>
+          <button class="nav-item" data-view="transactions"><i data-lucide="receipt-text"></i><span>Transaksi</span><em>12</em></button>
+          <button class="nav-item" data-view="reports"><i data-lucide="chart-no-axes-combined"></i><span>Laporan</span></button>
+          <p class="nav-label admin-label">Admin</p>
+          <button class="nav-item" data-view="settings"><i data-lucide="settings-2"></i><span>Pengaturan</span><small>ADMIN</small></button>
+        </nav>
+        <div class="sidebar-footer"><button class="profile-mini"><span class="avatar avatar-purple">AK</span><span><strong>Admin kas</strong><small>Admin</small></span><i data-lucide="chevron-up"></i></button></div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="topbar-leading"><div class="mobile-brand"><div class="brand-mark"><i data-lucide="home"></i></div><strong>KasTEDS</strong></div></div>
+          <div class="topbar-actions">
+            <div class="month-switcher"><button class="icon-button" aria-label="Bulan sebelumnya"><i data-lucide="chevron-left"></i></button><span id="month-label">Agustus 2026</span><button class="icon-button" aria-label="Bulan berikutnya"><i data-lucide="chevron-right"></i></button></div>
+            <button class="profile-pill"><span class="avatar avatar-purple">AK</span><span>Admin kas</span><i data-lucide="chevron-down"></i></button>
+          </div>
+        </header>
+
+        <section class="page-view is-visible" id="dashboard-view" data-page="dashboard">
+          <div class="section-intro"><div><p class="eyebrow accent">Keuangan kontrakan</p><h2>Ringkasan kas komunal</h2><p class="muted">Pantau uang masuk, keluar, dan saldo rumah dalam satu tampilan.</p></div><button class="button button-primary" id="open-add"><i data-lucide="plus"></i>Tambah transaksi</button></div>
+
+          <div class="dashboard-grid hero-grid">
+            <article class="card balance-card">
+              <div class="card-heading"><div><p class="label">Saldo saat ini</p><p class="balance-amount" id="balance-value">Rp 0</p></div><span class="soft-icon purple-soft"><i data-lucide="wallet-cards"></i></span></div>
+              <div class="balance-breakdown"><div><span class="metric-dot income-dot"></span><span>Pemasukan bulan ini</span><strong class="income-text" id="income-value">+Rp0</strong></div><div><span class="metric-dot expense-dot"></span><span>Pengeluaran bulan ini</span><strong class="expense-text" id="expense-value">-Rp0</strong></div></div>
+            </article>
+            <article class="card bill-card">
+              <div class="card-heading"><div><p class="label">Budget operasional Agustus</p><h3>Rp0 <small>belum diatur</small></h3></div><span class="soft-icon yellow-soft"><i data-lucide="receipt"></i></span></div>
+              <div class="bill-list"><div><span class="bill-icon blue-soft"><i data-lucide="zap"></i></span><span>Listrik</span><strong>Rp200.000</strong></div><div><span class="bill-icon blue-soft"><i data-lucide="wifi"></i></span><span>WiFi</span><strong>Rp66.000</strong></div><div><span class="bill-icon mint-soft"><i data-lucide="coins"></i></span><span>Iuran</span><strong>Rp30.000</strong></div><div><span class="bill-icon blue-soft"><i data-lucide="droplets"></i></span><span>Air PDAM</span><strong>Rp15.000</strong></div><div><span class="bill-icon orange-soft"><i data-lucide="shopping-basket"></i></span><span>Kas & kebutuhan</span><strong>Rp59.000</strong></div></div>
+              <button class="text-button" data-view="settings">Edit breakdown <i data-lucide="arrow-up-right"></i></button>
+            </article>
+          </div>
+
+          <div class="dashboard-grid summary-grid">
+            <article class="card payment-card"><div class="card-heading"><div><p class="label">Rekap kas komunal</p><h3>Belum ada transaksi</h3></div><span class="soft-icon mint-soft"><i data-lucide="landmark"></i></span></div><div class="payment-foot"><span><b class="status-dot paid-dot"></b><strong>Rp0</strong> pemasukan</span><span><b class="status-dot unpaid-dot"></b><strong>Rp0</strong> pengeluaran</span></div></article>
+            <article class="card monthly-card"><div class="card-heading"><div><p class="label">Ringkasan bulan ini</p><h3>Siap diisi</h3></div><span class="soft-icon blue-soft"><i data-lucide="bar-chart-3"></i></span></div><div class="summary-metrics"><div><span>Pemasukan</span><strong class="income-text">+Rp0</strong><small class="neutral">Belum ada data</small></div><div><span>Pengeluaran</span><strong class="expense-text">-Rp0</strong><small class="neutral">Belum ada data</small></div></div></article>
+          </div>
+
+          <div class="dashboard-grid lower-grid">
+            <article class="card transactions-card"><div class="card-heading"><div><p class="label">Aktivitas terbaru</p><h3>Transaksi terbaru</h3></div><button class="text-button" data-view="transactions">Lihat semua <i data-lucide="arrow-right"></i></button></div><div class="transaction-list compact" id="recent-transactions"></div></article>
+            <article class="card expense-card"><div class="card-heading"><div><p class="label">Bulan berjalan</p><h3>Pengeluaran terbesar</h3></div><button class="icon-button" aria-label="Info pengeluaran"><i data-lucide="info"></i></button></div><div class="empty-state"><i data-lucide="pie-chart"></i><strong>Belum ada pengeluaran</strong><span>Breakdown biaya akan muncul setelah transaksi dicatat.</span></div></article>
+          </div>
+        </section>
+
+        <section class="page-view" id="transactions-view" data-page="transactions">
+          <div class="section-intro"><div><p class="eyebrow accent">Catatan keuangan</p><h2>Transaksi</h2><p class="muted">Semua pemasukan dan pengeluaran rumah, tersusun rapi.</p></div><button class="button button-primary" id="open-add-secondary"><i data-lucide="plus"></i>Tambah transaksi</button></div>
+          <div class="filter-row"><div class="search-input"><i data-lucide="search"></i><input id="transaction-search" placeholder="Cari transaksi..." /></div><select id="type-filter"><option value="ALL">Semua tipe</option><option value="INCOME">Pemasukan</option><option value="EXPENSE">Pengeluaran</option></select><select id="category-filter"><option value="ALL">Semua kategori</option><option>Tagihan</option><option>Iuran Bulanan</option><option>Kebersihan</option><option>Perbaikan</option></select><button class="button button-secondary"><i data-lucide="sliders-horizontal"></i>Filter</button></div>
+          <article class="card table-card"><div class="table-toolbar"><div><span class="result-count" id="result-count">6 transaksi</span><span class="muted"> · Agustus 2026</span></div><button class="icon-button" aria-label="Opsi transaksi"><i data-lucide="more-horizontal"></i></button></div><div class="transaction-list" id="all-transactions"></div></article>
+        </section>
+
+        <section class="page-view" id="reports-view" data-page="reports">
+          <div class="section-intro"><div><p class="eyebrow accent">Baca polanya</p><h2>Laporan</h2><p class="muted">Ringkasan sederhana untuk keputusan rumah yang lebih jelas.</p></div><button class="button button-secondary"><i data-lucide="download"></i>Export laporan</button></div>
+          <div class="report-kpis"><article class="card"><span class="soft-icon mint-soft"><i data-lucide="arrow-down-left"></i></span><p>Total pemasukan</p><strong class="income-text">Rp0</strong><small>Agustus 2026</small></article><article class="card"><span class="soft-icon coral-soft"><i data-lucide="arrow-up-right"></i></span><p>Total pengeluaran</p><strong class="expense-text">Rp0</strong><small>Agustus 2026</small></article><article class="card"><span class="soft-icon purple-soft"><i data-lucide="scale"></i></span><p>Net cash flow</p><strong>Rp0</strong><small>Belum ada data pembanding</small></article></div>
+          <div class="report-grid"><article class="card chart-card"><div class="card-heading"><div><p class="label">Perbandingan bulanan</p><h3>Pemasukan vs pengeluaran</h3></div></div><div class="empty-state"><i data-lucide="bar-chart-3"></i><strong>Belum ada data</strong><span>Grafik akan terisi setelah transaksi dicatat.</span></div></article><article class="card chart-card"><div class="card-heading"><div><p class="label">Komposisi biaya</p><h3>Pengeluaran Agustus</h3></div></div><div class="empty-state"><i data-lucide="pie-chart"></i><strong>Belum ada data</strong><span>Breakdown biaya akan muncul di sini.</span></div></article></div>
+        </section>
+
+        <section class="page-view" id="settings-view" data-page="settings">
+          <div class="section-intro"><div><p class="eyebrow accent">Kontrol admin</p><h2>Pengaturan</h2><p class="muted">Atur komponen budget operasional kas komunal.</p></div><button class="button button-primary" id="save-settings"><i data-lucide="save"></i>Simpan perubahan</button></div>
+          <div class="settings-grid"><article class="card settings-card"><div class="settings-header"><span class="soft-icon purple-soft"><i data-lucide="coins"></i></span><div><h3>Budget bulanan</h3><p class="muted">Nominal alokasi operasional kas komunal.</p></div></div><label class="field-label" for="contribution-total">Total budget</label><div class="currency-input"><span>Rp</span><input id="contribution-total" value="0" inputmode="numeric" /></div><div class="settings-note"><i data-lucide="info"></i><span>Total otomatis mengikuti penjumlahan breakdown di samping.</span></div></article><article class="card settings-card"><div class="settings-header"><span class="soft-icon yellow-soft"><i data-lucide="list-tree"></i></span><div><h3>Breakdown budget</h3><p class="muted">Isi komponen budget sesuai kebutuhan rumah.</p></div></div><div class="breakdown-fields"><label><span>Listrik</span><div class="currency-input"><span>Rp</span><input class="breakdown-value" value="0" inputmode="numeric" /></div></label><label><span>WiFi</span><div class="currency-input"><span>Rp</span><input class="breakdown-value" value="0" inputmode="numeric" /></div></label><label><span>Iuran</span><div class="currency-input"><span>Rp</span><input class="breakdown-value" value="0" inputmode="numeric" /></div></label><label><span>Air PDAM</span><div class="currency-input"><span>Rp</span><input class="breakdown-value" value="0" inputmode="numeric" /></div></label><label><span>Kas & kebutuhan lain</span><div class="currency-input"><span>Rp</span><input class="breakdown-value" value="0" inputmode="numeric" /></div></label></div><div class="breakdown-total"><span>Total breakdown</span><strong id="breakdown-total">Rp0</strong></div></article></div>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Navigasi mobile"><button class="is-active" data-view="dashboard"><i data-lucide="layout-dashboard"></i><span>Beranda</span></button><button data-view="transactions"><i data-lucide="receipt-text"></i><span>Transaksi</span></button><button data-view="reports"><i data-lucide="chart-no-axes-combined"></i><span>Laporan</span></button></nav>
+    </div>
+
+    <div class="modal-backdrop" id="transaction-modal" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><p class="eyebrow accent">Admin only</p><h2 id="modal-title">Tambah transaksi</h2></div><button class="icon-button" id="close-modal" aria-label="Tutup dialog"><i data-lucide="x"></i></button></div><form id="transaction-form"><div class="segmented"><button type="button" class="is-active" data-type="INCOME">Pemasukan</button><button type="button" data-type="EXPENSE">Pengeluaran</button></div><input type="hidden" id="transaction-type" value="INCOME" /><label>Judul transaksi<input required id="transaction-title" placeholder="Contoh: Iuran kas bulanan" /></label><div class="form-row"><label>Nominal<div class="currency-input"><span>Rp</span><input required id="transaction-amount" type="number" min="1" placeholder="0" /></div></label><label>Tanggal<input required id="transaction-date" type="date" value="2026-08-31" /></label></div><label>Kategori<select id="transaction-category"><option>Iuran Bulanan</option><option>Tagihan</option><option>Kebersihan</option><option>Perbaikan</option><option>Perlengkapan Rumah</option><option>Lainnya</option></select></label><label>Catatan <span class="optional">(opsional)</span><textarea id="transaction-description" rows="3" placeholder="Tambahkan detail singkat..."></textarea></label><div class="modal-actions"><button type="button" class="button button-secondary" id="cancel-modal">Batal</button><button class="button button-primary" type="submit">Simpan transaksi</button></div></form></div></div>
+    <div class="toast" id="toast" role="status"><span class="toast-icon"><i data-lucide="check"></i></span><span id="toast-message">Perubahan tersimpan.</span></div>
+    <script src="app.js"></script>
+  </body>
+</html>
