@@ -48,6 +48,16 @@ alter table public.categories enable row level security;
 alter table public.transactions enable row level security;
 alter table public.budget_items enable row level security;
 
+drop policy if exists "authenticated users can read profiles" on public.profiles;
+drop policy if exists "authenticated users can read categories" on public.categories;
+drop policy if exists "authenticated users can read transactions" on public.transactions;
+drop policy if exists "authenticated users can read budget" on public.budget_items;
+drop policy if exists "public users can read categories" on public.categories;
+drop policy if exists "public users can read transactions" on public.transactions;
+drop policy if exists "public users can read budget" on public.budget_items;
+drop policy if exists "admins manage transactions" on public.transactions;
+drop policy if exists "admins manage budget" on public.budget_items;
+
 create policy "authenticated users can read profiles" on public.profiles for select to authenticated using (true);
 create policy "public users can read categories" on public.categories for select to anon, authenticated using (active = true);
 create policy "public users can read transactions" on public.transactions for select to anon, authenticated using (true);
