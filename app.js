@@ -10,6 +10,14 @@ const fallbackCategories = [
   { name: "Air PDAM", icon: "droplets" }, { name: "Kebersihan", icon: "sparkles" }, { name: "Perbaikan", icon: "wrench" },
   { name: "Perlengkapan Rumah", icon: "shopping-basket" }, { name: "Kas", icon: "wallet" }, { name: "Lainnya", icon: "shapes" }
 ];
+const transactionCategoryGroups = {
+  INCOME: ["Iuran Bulanan", "Kas", "Lainnya"],
+  EXPENSE: ["Listrik", "WiFi", "Air PDAM", "Tagihan", "Kebersihan", "Perbaikan", "Perlengkapan Rumah", "Kas", "Lainnya"]
+};
+const transactionCopy = {
+  INCOME: { title: "Tambah pemasukan", context: "Catat sumber dana yang masuk ke kas komunal.", titleLabel: "Sumber pemasukan", titlePlaceholder: "Contoh: Iuran kas bulanan", categoryLabel: "Kategori pemasukan", descriptionPlaceholder: "Tambahkan detail sumber dana...", submit: "Simpan pemasukan" },
+  EXPENSE: { title: "Tambah pengeluaran", context: "Catat kebutuhan yang dibayar dari kas komunal.", titleLabel: "Keperluan pengeluaran", titlePlaceholder: "Contoh: Bayar listrik rumah", categoryLabel: "Kategori pengeluaran", descriptionPlaceholder: "Tambahkan detail penggunaan dana...", submit: "Simpan pengeluaran" }
+};
 
 const supabaseConfig = window.KASTEDS_SUPABASE || {};
 const supabaseClient = window.supabase?.createClient && supabaseConfig.url && supabaseConfig.publishableKey
@@ -154,15 +162,39 @@ function renderBudget() {
   byId("breakdown-total").textContent = formatIDR(total, true);
 }
 
+function renderTransactionCategoryOptions(type, selectedValue = byId("transaction-category")?.value) {
+  const names = transactionCategoryGroups[type] || transactionCategoryGroups.INCOME;
+  const source = categories.length ? categories : fallbackCategories;
+  const byName = new Map(source.map((item) => [item.name, item]));
+  const options = names.map((name) => byName.get(name)).filter(Boolean).map((item) => `<option value="${escapeHTML(item.name)}">${escapeHTML(item.name)}</option>`).join("");
+  const select = byId("transaction-category");
+  if (!select) return;
+  select.innerHTML = options;
+  select.value = names.includes(selectedValue) && byName.has(selectedValue) ? selectedValue : (names.find((name) => byName.has(name)) || "");
+}
+
+function setTransactionType(type) {
+  const normalized = type === "EXPENSE" ? "EXPENSE" : "INCOME";
+  const copy = transactionCopy[normalized];
+  byId("transaction-type").value = normalized;
+  document.querySelectorAll(".segmented button").forEach((button) => button.classList.toggle("is-active", button.dataset.type === normalized));
+  byId("modal-title").textContent = copy.title;
+  byId("modal-context").textContent = copy.context;
+  byId("transaction-title-label").textContent = copy.titleLabel;
+  byId("transaction-title").placeholder = copy.titlePlaceholder;
+  byId("transaction-category-label").textContent = copy.categoryLabel;
+  byId("transaction-description").placeholder = copy.descriptionPlaceholder;
+  byId("submit-transaction").textContent = copy.submit;
+  renderTransactionCategoryOptions(normalized);
+}
+
 function renderCategoryOptions() {
   if (!categories.length) return;
   const currentFilter = byId("category-filter").value;
-  const currentTransaction = byId("transaction-category").value;
   const options = categories.map((item) => `<option value="${escapeHTML(item.name)}">${escapeHTML(item.name)}</option>`).join("");
   byId("category-filter").innerHTML = `<option value="ALL">Semua kategori</option>${options}`;
-  byId("transaction-category").innerHTML = options;
   byId("category-filter").value = categories.some((item) => item.name === currentFilter) ? currentFilter : "ALL";
-  byId("transaction-category").value = categories.some((item) => item.name === currentTransaction) ? currentTransaction : (categories[0]?.name || "");
+  renderTransactionCategoryOptions(byId("transaction-type")?.value || "INCOME");
 }
 
 async function loadSupabaseData(showError = false) {
@@ -200,11 +232,12 @@ function showToast(message) {
   showToast.timer = setTimeout(() => byId("toast").classList.remove("is-visible"), 2800);
 }
 
-function toggleModal(open) {
+function toggleModal(open, type = "INCOME") {
   const modal = byId("transaction-modal");
   modal.classList.toggle("is-open", open);
   modal.setAttribute("aria-hidden", String(!open));
   if (open) {
+    setTransactionType(type);
     byId("transaction-date").value = todayISO();
     setTimeout(() => byId("transaction-title").focus(), 80);
   }
@@ -218,13 +251,12 @@ document.addEventListener("click", async (event) => {
     setView(nav.dataset.view);
     return;
   }
-  if (event.target.closest("#open-add, #open-add-secondary")) return isAdmin() ? toggleModal(true) : showLogin();
+  const addButton = event.target.closest("[data-open-add]");
+  if (addButton) return isAdmin() ? toggleModal(true, addButton.dataset.openAdd) : showLogin();
   if (event.target.closest("#close-modal, #cancel-modal") || event.target.id === "transaction-modal") toggleModal(false);
   const typeButton = event.target.closest(".segmented button");
   if (typeButton) {
-    document.querySelectorAll(".segmented button").forEach((button) => button.classList.remove("is-active"));
-    typeButton.classList.add("is-active");
-    byId("transaction-type").value = typeButton.dataset.type;
+    setTransactionType(typeButton.dataset.type);
   }
 });
 
@@ -244,15 +276,14 @@ byId("transaction-form").addEventListener("submit", async (event) => {
   submitButton.textContent = "Menyimpan...";
   const { data, error } = await supabaseClient.from("transactions").insert(payload).select("id,type,amount,title,description,transaction_date,created_at,categories(name,icon)").single();
   submitButton.disabled = false;
-  submitButton.textContent = "Simpan transaksi";
+  submitButton.textContent = transactionCopy[byId("transaction-type").value]?.submit || "Simpan transaksi";
   if (error) return showToast("Transaksi gagal disimpan. Pastikan role admin sudah benar.");
   transactions.unshift(mapTransaction(data));
   renderTransactions();
   renderSummary();
   toggleModal(false);
   event.target.reset();
-  byId("transaction-type").value = "INCOME";
-  document.querySelectorAll(".segmented button").forEach((button, index) => button.classList.toggle("is-active", index === 0));
+  setTransactionType("INCOME");
   showToast("Transaksi berhasil disimpan.");
 });
 
