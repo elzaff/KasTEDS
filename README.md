@@ -18,6 +18,7 @@ Lalu buka <http://localhost:3000>.
 - `styles.css` — design tokens, layout responsive, dan komponen
 - `app.js` — navigasi, filter, modal transaksi, dan rekap saldo
 - `KASTEDS_DESIGN_SYSTEM.md` — sumber aturan desain
+- `supabase/schema.sql` — schema tabel dan RLS untuk Supabase
 
 ## Catatan data
 
@@ -33,6 +34,14 @@ Login diverifikasi server-side melalui `api/login.js`. Atur dua environment vari
 Tanpa `ADMIN_PASSWORD`, semua percobaan login akan ditolak.
 
 Dashboard, transaksi, dan laporan dapat dibaca tanpa login. Login admin hanya diminta saat menambah transaksi atau membuka pengaturan.
+
+## Setup Supabase
+
+1. Buat project baru di Supabase.
+2. Buka **SQL Editor**, jalankan isi `supabase/schema.sql`.
+3. Buat user admin di **Authentication → Users**.
+4. Tambahkan row user tersebut ke `public.profiles` dengan `role = 'ADMIN'`.
+5. Simpan `Project URL` dan `anon key` sebagai environment variable saat frontend mulai dihubungkan ke database.
 
 ## Deploy
 
