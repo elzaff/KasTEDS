@@ -72,7 +72,7 @@ byId("login-form").addEventListener("submit", async (event) => {
   try {
     if (!supabaseClient) throw new Error("Supabase belum terhubung.");
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email: byId("login-email").value.trim().toLowerCase(), password: byId("login-password").value });
-    if (error) throw new Error("Email atau password admin salah.");
+    if (error) throw new Error("Akun Supabase belum dibuat atau password salah. Cek Authentication → Users.");
     const profile = await loadProfile(data.user);
     if (profile?.role !== "ADMIN") {
       await supabaseClient.auth.signOut();
