@@ -5,6 +5,21 @@ const iconFor = (name) => ({ zap: "zap", wifi: "wifi", coins: "coins", wrench: "
 const formatIDR = (value, spaced = false) => `${spaced ? "Rp " : "Rp"}${Math.round(value).toLocaleString("id-ID")}`;
 const formatSigned = (item) => `${item.type === "INCOME" ? "+" : "-"}${formatIDR(item.amount)}`;
 const byId = (id) => document.getElementById(id);
+const ADMIN_EMAIL = "admin@kasteds.local";
+const ADMIN_PASSWORD = "kasteds123";
+
+function unlockApp() { sessionStorage.setItem("kasteds_admin", "1"); byId("login-screen").style.display = "none"; byId("app-shell").classList.add("is-unlocked"); }
+
+if (sessionStorage.getItem("kasteds_admin") === "1") unlockApp();
+
+byId("login-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const valid = byId("login-email").value.trim().toLowerCase() === ADMIN_EMAIL && byId("login-password").value === ADMIN_PASSWORD;
+  if (!valid) { byId("login-error").textContent = "Email atau password admin salah."; return; }
+  byId("login-error").textContent = ""; unlockApp();
+});
+
+byId("logout-button").addEventListener("click", () => { sessionStorage.removeItem("kasteds_admin"); byId("app-shell").classList.remove("is-unlocked"); byId("login-screen").style.display = "grid"; byId("login-password").value = ""; byId("login-email").focus(); });
 
 function transactionMarkup(item) {
   return `<div class="transaction-item" data-id="${item.id}">

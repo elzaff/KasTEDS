@@ -12,7 +12,15 @@
     <script src="https://unpkg.com/lucide@latest"></script>
   </head>
   <body>
-    <div class="app-shell">
+    <section class="login-screen" id="login-screen" aria-labelledby="login-title">
+      <div class="login-card">
+        <div class="login-brand"><div class="brand-mark"><i data-lucide="home"></i></div><div><strong>KasTEDS</strong><span>Kas komunal lebih jelas</span></div></div>
+        <div class="login-copy"><p class="eyebrow accent">Admin access</p><h1 id="login-title">Masuk ke KasTEDS</h1><p>Kelola rekap kas komunal dengan aman dan ringkas.</p></div>
+        <form id="login-form" class="login-form"><label>Email admin<input id="login-email" type="email" autocomplete="username" placeholder="admin@kasteds.local" required /></label><label>Password<input id="login-password" type="password" autocomplete="current-password" placeholder="Masukkan password" required /></label><p class="login-error" id="login-error" role="alert"></p><button class="button button-primary" type="submit">Masuk sebagai admin <i data-lucide="arrow-right"></i></button></form>
+        <p class="login-footnote">Akses terbatas untuk pengelola kas.</p>
+      </div>
+    </section>
+    <div class="app-shell" id="app-shell">
       <aside class="sidebar" aria-label="Navigasi utama">
         <div class="brand">
           <div class="brand-mark" aria-hidden="true"><i data-lucide="home"></i></div>
@@ -26,7 +34,7 @@
           <p class="nav-label admin-label">Admin</p>
           <button class="nav-item" data-view="settings"><i data-lucide="settings-2"></i><span>Pengaturan</span><small>ADMIN</small></button>
         </nav>
-        <div class="sidebar-footer"><button class="profile-mini"><span class="avatar avatar-purple">AK</span><span><strong>Admin kas</strong><small>Admin</small></span><i data-lucide="chevron-up"></i></button></div>
+        <div class="sidebar-footer"><button class="profile-mini" id="logout-button"><span class="avatar avatar-purple">AK</span><span><strong>Admin kas</strong><small>Keluar</small></span><i data-lucide="log-out"></i></button></div>
       </aside>
 
       <main class="main-content">
