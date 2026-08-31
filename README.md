@@ -23,12 +23,14 @@ Lalu buka <http://localhost:3000>.
 
 Project dimulai kosong. Masukkan transaksi dan breakdown budget sendiri melalui UI. Data saat ini bersifat in-memory dan akan reset ketika halaman direfresh.
 
-## Login admin demo
+## Login admin
 
-- Email: `admin@kasteds.local`
-- Password: `kasteds123`
+Login diverifikasi server-side melalui `api/login.js`. Atur dua environment variable di Vercel:
 
-Login ini adalah gate client-side untuk prototype static. Untuk production, pindahkan autentikasi ke Supabase Auth atau backend server-side sebelum menyimpan data sensitif.
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD` (simpan sebagai sensitive production secret)
+
+Tanpa `ADMIN_PASSWORD`, semua percobaan login akan ditolak.
 
 ## Deploy
 

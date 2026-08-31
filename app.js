@@ -5,18 +5,17 @@ const iconFor = (name) => ({ zap: "zap", wifi: "wifi", coins: "coins", wrench: "
 const formatIDR = (value, spaced = false) => `${spaced ? "Rp " : "Rp"}${Math.round(value).toLocaleString("id-ID")}`;
 const formatSigned = (item) => `${item.type === "INCOME" ? "+" : "-"}${formatIDR(item.amount)}`;
 const byId = (id) => document.getElementById(id);
-const ADMIN_EMAIL = "admin@kasteds.local";
-const ADMIN_PASSWORD = "kasteds123";
-
 function unlockApp() { sessionStorage.setItem("kasteds_admin", "1"); byId("login-screen").style.display = "none"; byId("app-shell").classList.add("is-unlocked"); }
 
 if (sessionStorage.getItem("kasteds_admin") === "1") unlockApp();
 
 byId("login-form").addEventListener("submit", (event) => {
   event.preventDefault();
-  const valid = byId("login-email").value.trim().toLowerCase() === ADMIN_EMAIL && byId("login-password").value === ADMIN_PASSWORD;
-  if (!valid) { byId("login-error").textContent = "Email atau password admin salah."; return; }
-  byId("login-error").textContent = ""; unlockApp();
+  const button = event.target.querySelector("button[type=submit]"); button.disabled = true; button.textContent = "Memeriksa...";
+  fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: byId("login-email").value.trim().toLowerCase(), password: byId("login-password").value }) })
+    .then(async (response) => { if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || "Login gagal"); unlockApp(); })
+    .catch((error) => { byId("login-error").textContent = error.message === "Failed to fetch" ? "Login aktif setelah deploy di Vercel." : "Email atau password admin salah."; })
+    .finally(() => { button.disabled = false; button.innerHTML = 'Masuk sebagai admin <i data-lucide="arrow-right"></i>'; window.lucide?.createIcons(); });
 });
 
 byId("logout-button").addEventListener("click", () => { sessionStorage.removeItem("kasteds_admin"); byId("app-shell").classList.remove("is-unlocked"); byId("login-screen").style.display = "grid"; byId("login-password").value = ""; byId("login-email").focus(); });
