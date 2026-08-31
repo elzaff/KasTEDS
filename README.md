@@ -32,6 +32,8 @@ Login diverifikasi server-side melalui `api/login.js`. Atur dua environment vari
 
 Tanpa `ADMIN_PASSWORD`, semua percobaan login akan ditolak.
 
+Dashboard, transaksi, dan laporan dapat dibaca tanpa login. Login admin hanya diminta saat menambah transaksi atau membuka pengaturan.
+
 ## Deploy
 
 Project ini static dan bisa dideploy langsung ke GitHub Pages, Vercel, atau hosting static lain tanpa build step.
