@@ -16,32 +16,35 @@ Lalu buka <http://localhost:3000>.
 
 - `index.html` — halaman dan komponen UI
 - `styles.css` — design tokens, layout responsive, dan komponen
-- `app.js` — navigasi, filter, modal transaksi, dan rekap saldo
+- `app.js` — navigasi, filter, Supabase Auth, transaksi, budget, dan rekap saldo
 - `KASTEDS_DESIGN_SYSTEM.md` — sumber aturan desain
 - `supabase/schema.sql` — schema tabel dan RLS untuk Supabase
 
 ## Catatan data
 
-Project dimulai kosong. Masukkan transaksi dan breakdown budget sendiri melalui UI. Data saat ini bersifat in-memory dan akan reset ketika halaman direfresh.
+Project dimulai kosong. Masukkan transaksi dan breakdown budget sendiri melalui UI. Transaksi dan budget disimpan di Supabase; kategori bawaan hanya metadata pilihan.
 
 ## Login admin
 
-Login diverifikasi server-side melalui `api/login.js`. Atur dua environment variable di Vercel:
-
-- `ADMIN_EMAIL`
-- `ADMIN_PASSWORD` (simpan sebagai sensitive production secret)
-
-Tanpa `ADMIN_PASSWORD`, semua percobaan login akan ditolak.
+Login admin menggunakan Supabase Auth (email + password) dan tabel `public.profiles` dengan `role = 'ADMIN'`.
 
 Dashboard, transaksi, dan laporan dapat dibaca tanpa login. Login admin hanya diminta saat menambah transaksi atau membuka pengaturan.
 
 ## Setup Supabase
 
-1. Buat project baru di Supabase.
-2. Buka **SQL Editor**, jalankan isi `supabase/schema.sql`.
-3. Buat user admin di **Authentication → Users**.
-4. Tambahkan row user tersebut ke `public.profiles` dengan `role = 'ADMIN'`.
-5. Simpan `Project URL` dan `anon key` sebagai environment variable saat frontend mulai dihubungkan ke database.
+1. Buka **SQL Editor**, jalankan isi `supabase/schema.sql` (schema ini memberi akses baca publik dan menulis hanya untuk admin).
+2. Buat user admin di **Authentication → Users**.
+3. Tambahkan row user tersebut ke `public.profiles` dengan query berikut (ganti emailnya):
+
+   ```sql
+   insert into public.profiles (id, display_name, role)
+   select id, 'Admin kas', 'ADMIN'
+   from auth.users
+   where email = 'email-admin-kamu@example.com'
+   on conflict (id) do update set role = 'ADMIN';
+   ```
+
+4. `Project URL` dan publishable/anon key sudah dipasang di `index.html`; key ini memang aman untuk client selama RLS aktif.
 
 ## Deploy
 
