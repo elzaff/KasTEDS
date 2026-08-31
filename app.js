@@ -5,9 +5,10 @@ const iconFor = (name) => ({ zap: "zap", wifi: "wifi", coins: "coins", wrench: "
 const formatIDR = (value, spaced = false) => `${spaced ? "Rp " : "Rp"}${Math.round(value).toLocaleString("id-ID")}`;
 const formatSigned = (item) => `${item.type === "INCOME" ? "+" : "-"}${formatIDR(item.amount)}`;
 const byId = (id) => document.getElementById(id);
-function unlockApp() { sessionStorage.setItem("kasteds_admin", "1"); byId("login-screen").style.display = "none"; byId("app-shell").classList.add("is-unlocked"); }
-
-if (sessionStorage.getItem("kasteds_admin") === "1") unlockApp();
+const isAdmin = () => sessionStorage.getItem("kasteds_admin") === "1";
+function showLogin() { byId("login-screen").classList.add("is-open"); byId("login-error").textContent = ""; setTimeout(() => byId("login-email").focus(), 80); }
+function unlockApp() { sessionStorage.setItem("kasteds_admin", "1"); byId("login-screen").classList.remove("is-open"); document.body.classList.add("admin-session"); }
+if (isAdmin()) document.body.classList.add("admin-session");
 
 byId("login-form").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -18,7 +19,8 @@ byId("login-form").addEventListener("submit", (event) => {
     .finally(() => { button.disabled = false; button.innerHTML = 'Masuk sebagai admin <i data-lucide="arrow-right"></i>'; window.lucide?.createIcons(); });
 });
 
-byId("logout-button").addEventListener("click", () => { sessionStorage.removeItem("kasteds_admin"); byId("app-shell").classList.remove("is-unlocked"); byId("login-screen").style.display = "grid"; byId("login-password").value = ""; byId("login-email").focus(); });
+byId("logout-button").addEventListener("click", () => { sessionStorage.removeItem("kasteds_admin"); document.body.classList.remove("admin-session"); setView("dashboard"); showToast("Anda sudah keluar dari mode admin."); });
+byId("cancel-login").addEventListener("click", () => byId("login-screen").classList.remove("is-open"));
 
 function transactionMarkup(item) {
   return `<div class="transaction-item" data-id="${item.id}">
@@ -67,8 +69,8 @@ function showToast(message) {
 function toggleModal(open) { const modal = byId("transaction-modal"); modal.classList.toggle("is-open", open); modal.setAttribute("aria-hidden", String(!open)); if (open) setTimeout(() => byId("transaction-title").focus(), 80); }
 
 document.addEventListener("click", (event) => {
-  const nav = event.target.closest("[data-view]"); if (nav) { event.preventDefault(); setView(nav.dataset.view); return; }
-  if (event.target.closest("#open-add, #open-add-secondary")) toggleModal(true);
+  const nav = event.target.closest("[data-view]"); if (nav) { event.preventDefault(); if (nav.dataset.view === "settings" && !isAdmin()) return showLogin(); setView(nav.dataset.view); return; }
+  if (event.target.closest("#open-add, #open-add-secondary")) { if (isAdmin()) toggleModal(true); else showLogin(); }
   if (event.target.closest("#close-modal, #cancel-modal") || event.target.id === "transaction-modal") toggleModal(false);
   const typeButton = event.target.closest(".segmented button"); if (typeButton) { document.querySelectorAll(".segmented button").forEach((button) => button.classList.remove("is-active")); typeButton.classList.add("is-active"); byId("transaction-type").value = typeButton.dataset.type; }
 });
