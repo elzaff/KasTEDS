@@ -49,9 +49,9 @@ alter table public.transactions enable row level security;
 alter table public.budget_items enable row level security;
 
 create policy "authenticated users can read profiles" on public.profiles for select to authenticated using (true);
-create policy "authenticated users can read categories" on public.categories for select to authenticated using (active = true);
-create policy "authenticated users can read transactions" on public.transactions for select to authenticated using (true);
-create policy "authenticated users can read budget" on public.budget_items for select to authenticated using (active = true);
+create policy "public users can read categories" on public.categories for select to anon, authenticated using (active = true);
+create policy "public users can read transactions" on public.transactions for select to anon, authenticated using (true);
+create policy "public users can read budget" on public.budget_items for select to anon, authenticated using (active = true);
 
 create policy "admins manage transactions" on public.transactions for all to authenticated using (
   exists (select 1 from public.profiles where id = auth.uid() and role = 'ADMIN')
@@ -64,3 +64,7 @@ create policy "admins manage budget" on public.budget_items for all to authentic
 ) with check (
   exists (select 1 from public.profiles where id = auth.uid() and role = 'ADMIN')
 );
+
+grant select on public.categories, public.transactions, public.budget_items to anon, authenticated;
+grant select on public.profiles to authenticated;
+grant insert, update, delete on public.transactions, public.budget_items to authenticated;
