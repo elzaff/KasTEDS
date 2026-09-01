@@ -24,10 +24,14 @@ create table if not exists public.transactions (
   category_id uuid references public.categories(id),
   transaction_date date not null default current_date,
   description text,
+  external_id text unique,
   created_by uuid references public.profiles(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.transactions add column if not exists external_id text;
+create unique index if not exists transactions_external_id_key on public.transactions (external_id);
 
 create table if not exists public.budget_items (
   id uuid primary key default gen_random_uuid(),

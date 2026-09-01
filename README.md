@@ -19,6 +19,8 @@ Lalu buka <http://localhost:3000>.
 - `app.js` — navigasi, filter, Supabase Auth, transaksi, budget, dan rekap saldo
 - `KASTEDS_DESIGN_SYSTEM.md` — sumber aturan desain
 - `supabase/schema.sql` — schema tabel dan RLS untuk Supabase
+- `AGENT_API.md` — kontrak API untuk agentic AI dan adapter WhatsApp
+- `openapi.json` — spesifikasi yang bisa di-import ke tool agent
 
 ## Catatan data
 
@@ -60,3 +62,7 @@ Dashboard, transaksi, dan laporan dapat dibaca tanpa login. Login admin hanya di
 ## Deploy
 
 Project ini static dan bisa dideploy langsung ke GitHub Pages, Vercel, atau hosting static lain tanpa build step.
+
+## Agentic AI & WhatsApp
+
+Endpoint server-side `/api/agent` memungkinkan agent membaca rekap dan mencatat transaksi atau budget tanpa membuka service-role key ke browser. Adapter `/api/whatsapp` mendukung WhatsApp Cloud API dan meneruskan pesan ke webhook agent. Lihat [AGENT_API.md](AGENT_API.md) untuk kontrak request, env Vercel, dan langkah koneksi.

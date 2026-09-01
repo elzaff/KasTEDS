@@ -1,5 +1,8 @@
 .tools/
 mobile.png
 .DS_Store
+.env
+.env.*
+!.env.example
 
 .vercel
