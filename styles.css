@@ -251,3 +251,83 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* === DARK NAVY / FLAT PLAYFUL MODE === */
+:root {
+  --color-background-raw: #11152f;
+  --color-surface-raw: #1d2344;
+  --color-text-primary-raw: #fffdf1;
+  --color-text-secondary-raw: #c5c9df;
+  --color-text-muted-raw: #8d94b6;
+  --color-border-raw: #343a61;
+  --color-border-strong-raw: #4a527b;
+  --color-navy-900: #11152f;
+  --color-navy-800: #222852;
+  --color-primary-soft: #3a3210;
+  --color-primary-pressed: #ffdc4f;
+  --color-primary-border: #675a1d;
+  --color-surface-tint: #292f55;
+  --color-primary: var(--color-yellow-500);
+  --color-primary-hover: #dda900;
+  --button-fg: var(--color-navy-900);
+  --shadow-card: 0 4px 0 rgb(7 9 27 / 52%), 0 14px 30px rgb(7 9 27 / 28%);
+  --shadow-button: 0 4px 0 rgb(7 9 27 / 62%);
+  --shadow-flat: 0 4px 0 rgb(7 9 27 / 52%), 0 14px 30px rgb(7 9 27 / 28%);
+  color-scheme: dark;
+}
+
+html, body { background: var(--color-background); }
+body { color: var(--color-text-primary); }
+.sidebar { color: var(--color-text-primary); background: var(--color-surface); border-right-color: var(--color-border); }
+.brand strong, .profile-mini strong, .profile-pill, h1, h2, h3, strong { color: var(--color-text-primary); }
+.brand span, .profile-mini small, .nav-label, .muted, .topbar .eyebrow { color: var(--color-text-muted); }
+.brand-mark, .avatar-purple { color: var(--color-navy-900); background: var(--color-yellow-500); box-shadow: 0 3px 0 rgb(92 69 0 / 65%); }
+.nav-item { color: var(--color-text-secondary); }
+.nav-item:hover, .nav-item.is-active { color: var(--color-primary-pressed); background: var(--color-primary-soft); }
+.nav-item.is-active svg, .nav-item.is-active em { color: var(--color-primary-pressed); }
+.sidebar-footer { border-top-color: var(--color-border); }
+.main-content { background: transparent; }
+.topbar { background: rgb(17 21 47 / 92%); border-bottom-color: var(--color-border); }
+.month-switcher, .profile-pill, .notification-button { color: var(--color-text-primary); background: var(--color-surface); border-color: var(--color-border); }
+.profile-pill:hover, .profile-mini:hover { border-color: var(--color-primary-border); background: var(--color-surface-tint); }
+.icon-button { color: var(--color-text-secondary); }
+.icon-button:hover { color: var(--color-primary-pressed); background: var(--color-primary-soft); }
+.button-primary { color: var(--button-fg); background: var(--color-primary); box-shadow: var(--shadow-button); }
+.button-primary:hover { color: var(--button-fg); background: var(--color-primary-hover); }
+.button-secondary { color: var(--color-text-primary); background: var(--color-surface); border-color: var(--color-border-strong); box-shadow: 0 3px 0 rgb(7 9 27 / 52%); }
+.button-secondary:hover { color: var(--color-primary-pressed); background: var(--color-surface-tint); border-color: var(--color-primary); }
+.text-button { color: var(--color-primary-pressed); }
+.card { background: var(--color-surface); border-color: var(--color-border); box-shadow: var(--shadow-flat); }
+.balance-card { background: #252b59; border-color: #303766; box-shadow: 0 4px 0 rgb(7 9 27 / 65%), 0 16px 34px rgb(7 9 27 / 38%); }
+.balance-card .label { color: rgb(255 253 241 / 62%); }
+.balance-breakdown { border-top-color: rgb(255 253 241 / 15%); }
+.bill-card h3 small { color: var(--color-text-muted); }
+.progress-track { background: var(--color-border); }
+.purple-soft, .yellow-soft, .orange-soft { color: var(--color-primary-pressed); background: rgb(255 200 0 / 15%); }
+.blue-soft { color: #83d6ff; background: rgb(74 183 255 / 15%); }
+.mint-soft { color: #75e1bd; background: rgb(85 214 169 / 15%); }
+.coral-soft { color: #ff9b9b; background: rgb(255 107 107 / 15%); }
+.transaction-item, .summary-metrics > div + div, .breakdown-total { border-color: var(--color-border); }
+.transaction-copy span, .payment-foot, .settings-note { color: var(--color-text-muted); }
+.transaction-amount.income, .income-text { color: #65dfb0; }
+.transaction-amount.expense, .expense-text { color: #ff8f8f; }
+.empty-state { color: var(--color-text-muted); }
+.empty-state strong { color: var(--color-text-primary); }
+.empty-state svg { color: var(--color-primary-pressed); }
+.donut::before { background: var(--color-surface); }
+.bars { border-bottom-color: var(--color-border); background: repeating-linear-gradient(to bottom, transparent 0, transparent 69px, var(--color-border) 70px); }
+.bars small, .bar-y { color: var(--color-text-muted); }
+.search-input input, select, .modal input, .modal textarea, .currency-input { color: var(--color-text-primary); background: var(--color-surface); border-color: var(--color-border-strong); }
+.search-input input::placeholder, .modal input::placeholder, .modal textarea::placeholder { color: var(--color-text-muted); }
+.currency-input span { color: var(--color-text-secondary); }
+.modal-backdrop { background: rgb(7 9 27 / 72%); }
+.modal { color: var(--color-text-primary); background: var(--color-surface); border-color: var(--color-border); box-shadow: 0 20px 70px rgb(7 9 27 / 55%); }
+.modal-context, .modal label { color: var(--color-text-secondary); }
+.segmented { background: var(--color-background); }
+.segmented button { color: var(--color-text-secondary); }
+.segmented button.is-active { color: var(--color-primary-pressed); background: var(--color-surface-tint); box-shadow: 0 2px 5px rgb(7 9 27 / 38%); }
+.toast { color: var(--color-text-primary); background: var(--color-surface); border-color: var(--color-border); box-shadow: 0 12px 32px rgb(7 9 27 / 42%); }
+.bottom-nav { background: rgb(29 35 68 / 96%); border-color: var(--color-border); box-shadow: 0 10px 28px rgb(7 9 27 / 48%); }
+.bottom-nav button { color: var(--color-text-muted); }
+.bottom-nav button.is-active { color: var(--color-primary-pressed); background: var(--color-primary-soft); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline-color: rgb(255 200 0 / 52%); }
