@@ -68,6 +68,15 @@ const shiftMonth = (month, delta) => {
   const shifted = new Date(Date.UTC(year, monthNumber - 1 + delta, 1));
   return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}`;
 };
+const balanceThroughMonth = (items, month, startingBalance = openingBalance) => {
+  const endDate = monthStart(shiftMonth(month, 1));
+  return items.reduce((balance, item) => {
+    const date = String(item.date || "").slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date >= endDate) return balance;
+    const amount = Number(item.amount) || 0;
+    return balance + (item.type === "INCOME" ? amount : item.type === "EXPENSE" ? -amount : 0);
+  }, startingBalance);
+};
 const activeTransactions = () => transactions.filter((item) => String(item.date || "").startsWith(`${activeMonth}-`));
 const emptyStateMarkup = (icon, title, message) => `<div class="empty-state"><i data-lucide="${escapeHTML(icon)}"></i><strong>${escapeHTML(title)}</strong><span>${escapeHTML(message)}</span></div>`;
 const chartColors = ["#ff8f8f", "#83d6ff", "#ffdc4f", "#75e1bd", "#bf9cff", "#f3a15c"];
@@ -278,7 +287,9 @@ function renderSummary() {
   const income = visibleTransactions.filter((item) => item.type === "INCOME").reduce((sum, item) => sum + item.amount, 0);
   const expense = visibleTransactions.filter((item) => item.type === "EXPENSE").reduce((sum, item) => sum + item.amount, 0);
   const net = income - expense;
-  byId("balance-value").textContent = formatIDR(openingBalance + net, true);
+  const balance = balanceThroughMonth(transactions, activeMonth);
+  byId("balance-value").textContent = formatIDR(balance, true);
+  byId("balance-value").setAttribute("aria-label", `Saldo kumulatif sampai ${formatMonthLabel(activeMonth)} ${formatIDR(balance, true)}`);
   document.querySelectorAll(".income-text").forEach((element) => { element.textContent = `+${formatIDR(income)}`; });
   document.querySelectorAll(".expense-text").forEach((element) => { element.textContent = `-${formatIDR(expense)}`; });
   byId("income-total").textContent = formatIDR(income, true);
@@ -559,5 +570,5 @@ restoreSession().catch((error) => {
 });
 
 // ponytail: one small smoke check keeps the currency rule from silently regressing.
-window.__KASTEDS_CHECK__ = () => { console.assert(formatIDR(370000) === "Rp370.000", "Currency formatting must use id-ID grouping"); console.assert(formatInputAmount("370000") === "370.000", "Input currency formatting must use id-ID grouping"); console.assert(parseAmountInput("370.000") === 370000, "Formatted currency must parse back to a number"); console.assert(formatCompactIDR(1200000) === "Rp1,2 jt", "Chart axis must use compact IDR formatting"); console.assert(shiftMonth("2026-09", 1) === "2026-10", "Month navigation must roll forward safely"); console.assert(Array.isArray(transactions), "Transactions must stay an array"); };
+window.__KASTEDS_CHECK__ = () => { console.assert(formatIDR(370000) === "Rp370.000", "Currency formatting must use id-ID grouping"); console.assert(formatInputAmount("370000") === "370.000", "Input currency formatting must use id-ID grouping"); console.assert(parseAmountInput("370.000") === 370000, "Formatted currency must parse back to a number"); console.assert(formatCompactIDR(1200000) === "Rp1,2 jt", "Chart axis must use compact IDR formatting"); console.assert(shiftMonth("2026-09", 1) === "2026-10", "Month navigation must roll forward safely"); console.assert(balanceThroughMonth([{ date: "2026-09-01", type: "INCOME", amount: 100 }, { date: "2026-10-01", type: "EXPENSE", amount: 25 }], "2026-10") === 75, "Balance must carry forward cumulatively"); console.assert(Array.isArray(transactions), "Transactions must stay an array"); };
 window.__KASTEDS_CHECK__();
