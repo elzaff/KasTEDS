@@ -4,6 +4,9 @@ let categories = [];
 let currentSession = null;
 let currentUser = null;
 let currentProfile = null;
+const initialMonth = "2026-09";
+let activeMonth = initialMonth;
+let budgetMonthSupported = true;
 const openingBalance = 0;
 const fallbackCategories = [
   { name: "Iuran Bulanan", icon: "coins" }, { name: "Listrik", icon: "zap" }, { name: "WiFi", icon: "wifi" },
@@ -30,6 +33,31 @@ const formatDate = (value) => { if (!value) return ""; const date = new Date(`${
 const todayISO = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; };
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[character]));
 const byId = (id) => document.getElementById(id);
+const monthFormatter = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric", timeZone: "UTC" });
+const isMonthKey = (value) => /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
+const formatMonthLabel = (month) => monthFormatter.format(new Date(`${month}-01T00:00:00Z`));
+const monthStart = (month) => `${month}-01`;
+const shiftMonth = (month, delta) => {
+  const [year, monthNumber] = (isMonthKey(month) ? month : initialMonth).split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, monthNumber - 1 + delta, 1));
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}`;
+};
+const activeTransactions = () => transactions.filter((item) => String(item.date || "").startsWith(`${activeMonth}-`));
+function updateMonthUI() {
+  const label = formatMonthLabel(activeMonth);
+  document.querySelectorAll("[data-month-label]").forEach((element) => { element.textContent = label; });
+  if (byId("month-label")) byId("month-label").setAttribute("aria-label", `Bulan aktif ${label}`);
+}
+function setActiveMonth(month) {
+  if (!isMonthKey(month)) return;
+  activeMonth = month;
+  updateMonthUI();
+  budgetItems = [];
+  renderTransactions();
+  renderSummary();
+  renderBudget();
+  if (supabaseClient) loadSupabaseData(true).catch((error) => { console.error("KasTEDS month load failed", error); });
+}
 const isAdmin = () => Boolean(currentSession && currentProfile?.role === "ADMIN");
 
 function showLogin() {
@@ -121,26 +149,28 @@ function transactionMarkup(item) {
 }
 
 function renderTransactions() {
+  const visibleTransactions = activeTransactions();
   const query = (byId("transaction-search")?.value || "").toLowerCase();
   const type = byId("type-filter")?.value || "ALL";
   const category = byId("category-filter")?.value || "ALL";
-  const filtered = transactions.filter((item) => {
+  const filtered = visibleTransactions.filter((item) => {
     const matchesQuery = !query || `${item.title} ${item.category}`.toLowerCase().includes(query);
     const matchesType = type === "ALL" || item.type === type;
     const matchesCategory = category === "ALL" || item.category.toLowerCase() === category.toLowerCase();
     return matchesQuery && matchesType && matchesCategory;
   });
   const empty = `<div class="empty-state"><i data-lucide="inbox"></i><strong>Belum ada transaksi</strong><span>Catat pemasukan atau pengeluaran pertama.</span></div>`;
-  byId("recent-transactions").innerHTML = transactions.length ? transactions.slice(0, 4).map(transactionMarkup).join("") : empty;
-  byId("all-transactions").innerHTML = filtered.length ? filtered.map(transactionMarkup).join("") : `<div class="empty-state"><i data-lucide="search-x"></i><strong>${transactions.length ? "Transaksi tidak ditemukan" : "Belum ada transaksi"}</strong><span>${transactions.length ? "Coba ubah kata kunci atau filter." : "Catat pemasukan atau pengeluaran pertama."}</span></div>`;
+  byId("recent-transactions").innerHTML = visibleTransactions.length ? visibleTransactions.slice(0, 4).map(transactionMarkup).join("") : empty;
+  byId("all-transactions").innerHTML = filtered.length ? filtered.map(transactionMarkup).join("") : `<div class="empty-state"><i data-lucide="search-x"></i><strong>${visibleTransactions.length ? "Transaksi tidak ditemukan" : "Belum ada transaksi"}</strong><span>${visibleTransactions.length ? "Coba ubah kata kunci atau filter." : "Catat pemasukan atau pengeluaran pertama."}</span></div>`;
   byId("result-count").textContent = `${filtered.length} transaksi`;
-  byId("transaction-count").textContent = transactions.length;
+  byId("transaction-count").textContent = visibleTransactions.length;
   window.lucide?.createIcons();
 }
 
 function renderSummary() {
-  const income = transactions.filter((item) => item.type === "INCOME").reduce((sum, item) => sum + item.amount, 0);
-  const expense = transactions.filter((item) => item.type === "EXPENSE").reduce((sum, item) => sum + item.amount, 0);
+  const visibleTransactions = activeTransactions();
+  const income = visibleTransactions.filter((item) => item.type === "INCOME").reduce((sum, item) => sum + item.amount, 0);
+  const expense = visibleTransactions.filter((item) => item.type === "EXPENSE").reduce((sum, item) => sum + item.amount, 0);
   const net = income - expense;
   byId("balance-value").textContent = formatIDR(openingBalance + net, true);
   document.querySelectorAll(".income-text").forEach((element) => { element.textContent = `+${formatIDR(income)}`; });
@@ -148,14 +178,14 @@ function renderSummary() {
   byId("income-total").textContent = formatIDR(income, true);
   byId("expense-total").textContent = formatIDR(expense, true);
   byId("net-value").textContent = formatIDR(net, true);
-  byId("transaction-status").textContent = transactions.length ? `${transactions.length} transaksi tercatat` : "Belum ada transaksi";
+  byId("transaction-status").textContent = visibleTransactions.length ? `${visibleTransactions.length} transaksi tercatat` : "Belum ada transaksi";
 }
 
 function renderBudget() {
   const values = Object.fromEntries(budgetItems.map((item) => [item.name, Number(item.amount) || 0]));
   const total = Object.values(values).reduce((sum, value) => sum + value, 0);
   byId("budget-total-amount").textContent = formatIDR(total, true);
-  byId("budget-status").textContent = total ? "alokasi aktif" : "belum diatur";
+  byId("budget-status").textContent = total ? (budgetMonthSupported ? "alokasi aktif" : "perlu migrasi") : "belum diatur";
   document.querySelectorAll("[data-budget-value]").forEach((element) => { element.textContent = formatIDR(values[element.dataset.budgetValue] || 0, true); });
   document.querySelectorAll("[data-budget-input]").forEach((input) => { input.value = values[input.dataset.budgetInput] || 0; });
   byId("contribution-total").value = total;
@@ -197,11 +227,21 @@ function renderCategoryOptions() {
   renderTransactionCategoryOptions(byId("transaction-type")?.value || "INCOME");
 }
 
+async function loadBudgetItems() {
+  const result = await supabaseClient.from("budget_items").select("*").eq("active", true).order("name");
+  if (result.error) return result;
+  const data = result.data || [];
+  if (data.length) budgetMonthSupported = Object.prototype.hasOwnProperty.call(data[0], "month");
+  if (budgetMonthSupported) result.data = data.filter((item) => item.month === monthStart(activeMonth));
+  return result;
+}
+
 async function loadSupabaseData(showError = false) {
   if (!supabaseClient) return;
+  const requestedMonth = activeMonth;
   const [transactionResult, budgetResult, categoryResult] = await Promise.all([
     supabaseClient.from("transactions").select("id,type,amount,title,description,transaction_date,created_at,categories(name,icon)").order("transaction_date", { ascending: false }).order("created_at", { ascending: false }),
-    supabaseClient.from("budget_items").select("id,name,amount,active").eq("active", true).order("name"),
+    loadBudgetItems(),
     supabaseClient.from("categories").select("id,name,icon").eq("active", true).order("name")
   ]);
   const firstError = [transactionResult, budgetResult, categoryResult].find((result) => result.error)?.error;
@@ -210,6 +250,7 @@ async function loadSupabaseData(showError = false) {
     if (showError) showToast("Supabase belum siap. Jalankan schema.sql terlebih dulu.");
     return;
   }
+  if (requestedMonth !== activeMonth) return;
   transactions = (transactionResult.data || []).map(mapTransaction);
   budgetItems = budgetResult.data || [];
   categories = categoryResult.data?.length ? categoryResult.data : fallbackCategories;
@@ -238,7 +279,8 @@ function toggleModal(open, type = "INCOME") {
   modal.setAttribute("aria-hidden", String(!open));
   if (open) {
     setTransactionType(type);
-    byId("transaction-date").value = todayISO();
+    const today = todayISO();
+    byId("transaction-date").value = today.startsWith(`${activeMonth}-`) ? today : monthStart(activeMonth);
     setTimeout(() => byId("transaction-title").focus(), 80);
   }
 }
@@ -260,6 +302,9 @@ document.addEventListener("click", async (event) => {
   }
 });
 
+byId("previous-month")?.addEventListener("click", () => setActiveMonth(shiftMonth(activeMonth, -1)));
+byId("next-month")?.addEventListener("click", () => setActiveMonth(shiftMonth(activeMonth, 1)));
+
 byId("transaction-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!isAdmin()) return showLogin();
@@ -268,6 +313,7 @@ byId("transaction-form").addEventListener("submit", async (event) => {
   const date = byId("transaction-date").value;
   const categoryName = byId("transaction-category").value;
   if (!title || !amount || amount < 1 || !date) return showToast("Isi judul, tanggal, dan nominal yang valid.");
+  if (!date.startsWith(`${activeMonth}-`)) return showToast(`Tanggal harus di ${formatMonthLabel(activeMonth)}.`);
   if (!supabaseClient || !currentUser) return showToast("Sesi Supabase belum tersedia. Silakan login ulang.");
   const category = categories.find((item) => item.name === categoryName);
   const payload = { type: byId("transaction-type").value, amount, title, category_id: category?.id || null, transaction_date: date, description: byId("transaction-description").value.trim() || null, created_by: currentUser.id };
@@ -297,10 +343,19 @@ document.querySelectorAll(".breakdown-value").forEach((input) => input.addEventL
 
 byId("save-settings").addEventListener("click", async () => {
   if (!isAdmin()) return showLogin();
-  const rows = [...document.querySelectorAll("[data-budget-input]")].map((input) => ({ name: input.dataset.budgetInput, amount: Math.max(0, Number(input.value) || 0), active: true, updated_at: new Date().toISOString() }));
-  const { data, error } = await supabaseClient.from("budget_items").upsert(rows, { onConflict: "name" }).select("id,name,amount,active");
-  if (error) return showToast("Budget gagal disimpan. Pastikan role admin sudah benar.");
+  if (!budgetMonthSupported) return showToast("Jalankan supabase/schema.sql dulu untuk mengaktifkan budget per bulan.");
+  const rows = [...document.querySelectorAll("[data-budget-input]")].map((input) => ({ name: input.dataset.budgetInput, month: monthStart(activeMonth), amount: Math.max(0, Number(input.value) || 0), active: true, updated_at: new Date().toISOString() }));
+  const { data, error } = await supabaseClient.from("budget_items").upsert(rows, { onConflict: "name,month" }).select("id,name,amount,active,month");
+  if (error) {
+    if (/month/i.test(error.message || "")) {
+      budgetMonthSupported = false;
+      renderBudget();
+      return showToast("Jalankan supabase/schema.sql dulu untuk mengaktifkan budget per bulan.");
+    }
+    return showToast("Budget gagal disimpan. Pastikan role admin sudah benar.");
+  }
   budgetItems = data || rows;
+  budgetMonthSupported = true;
   renderBudget();
   showToast("Pengaturan budget berhasil disimpan.");
 });
@@ -322,6 +377,7 @@ async function restoreSession() {
   await loadSupabaseData();
 }
 
+updateMonthUI();
 renderTransactions();
 renderSummary();
 renderBudget();
@@ -333,5 +389,5 @@ restoreSession().catch((error) => {
 });
 
 // ponytail: one small smoke check keeps the currency rule from silently regressing.
-window.__KASTEDS_CHECK__ = () => { console.assert(formatIDR(370000) === "Rp370.000", "Currency formatting must use id-ID grouping"); console.assert(Array.isArray(transactions), "Transactions must stay an array"); };
+window.__KASTEDS_CHECK__ = () => { console.assert(formatIDR(370000) === "Rp370.000", "Currency formatting must use id-ID grouping"); console.assert(shiftMonth("2026-09", 1) === "2026-10", "Month navigation must roll forward safely"); console.assert(Array.isArray(transactions), "Transactions must stay an array"); };
 window.__KASTEDS_CHECK__();

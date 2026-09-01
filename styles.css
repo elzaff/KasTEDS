@@ -331,3 +331,24 @@ body { color: var(--color-text-primary); }
 .bottom-nav button { color: var(--color-text-muted); }
 .bottom-nav button.is-active { color: var(--color-primary-pressed); background: var(--color-primary-soft); }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline-color: rgb(255 200 0 / 52%); }
+
+@media (max-width: 820px) {
+  .topbar-actions .month-switcher { display: flex; }
+  .month-switcher { height: 36px; gap: 2px; padding: 0 2px; }
+  .month-switcher .icon-button { width: 32px; height: 32px; }
+  .month-switcher span { min-width: 94px; font-size: 11px; }
+}
+
+@media (max-width: 520px) {
+  .topbar-actions { gap: 6px; }
+  .month-switcher span { min-width: 88px; font-size: 10px; }
+  .month-switcher .icon-button { width: 30px; height: 30px; }
+  .profile-pill { width: 32px; height: 32px; padding: 0; }
+}
+
+@media (max-width: 360px) {
+  .mobile-brand { gap: 6px; }
+  .mobile-brand strong { font-size: 14px; }
+  .topbar-actions { gap: 3px; }
+  .month-switcher span { min-width: 70px; }
+}

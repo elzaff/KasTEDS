@@ -31,11 +31,22 @@ create table if not exists public.transactions (
 
 create table if not exists public.budget_items (
   id uuid primary key default gen_random_uuid(),
-  name text not null unique,
+  name text not null,
+  month date not null default date_trunc('month', current_date)::date,
   amount numeric(14,2) not null default 0 check (amount >= 0),
   active boolean not null default true,
   updated_at timestamptz not null default now()
 );
+
+-- Month-scoped budget migration for projects created with the first schema.
+alter table public.budget_items add column if not exists month date;
+update public.budget_items
+set month = date_trunc('month', coalesce(updated_at, now()))::date
+where month is null;
+alter table public.budget_items alter column month set default date_trunc('month', current_date)::date;
+alter table public.budget_items alter column month set not null;
+alter table public.budget_items drop constraint if exists budget_items_name_key;
+create unique index if not exists budget_items_name_month_key on public.budget_items (name, month);
 
 insert into public.categories (name, icon) values
   ('Iuran Bulanan', 'coins'), ('Listrik', 'zap'), ('WiFi', 'wifi'),

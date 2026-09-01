@@ -24,6 +24,17 @@ Lalu buka <http://localhost:3000>.
 
 Project dimulai kosong. Masukkan transaksi dan breakdown budget sendiri melalui UI. Transaksi dan budget disimpan di Supabase; kategori bawaan hanya metadata pilihan.
 
+## Mulai September 2026
+
+KasTEDS membuka bulan aktif **September 2026**. Panah di header mengganti bulan aktif; rekap dashboard, transaksi, laporan, dan budget mengikuti bulan tersebut.
+
+1. Login sebagai admin.
+2. Buka **Pengaturan**, isi breakdown budget September, lalu pilih **Simpan perubahan**.
+3. Pilih **Tambah pemasukan** atau **Tambah pengeluaran**, isi nominal, kategori, tanggal, dan catatan opsional.
+4. Pastikan tanggal transaksi berada di bulan aktif. Aplikasi menolak tanggal dari bulan lain agar rekap tidak tercampur.
+
+Jika schema lama sudah pernah dijalankan, jalankan ulang seluruh `supabase/schema.sql` di SQL Editor. Script ini menambahkan kolom bulan pada budget dan membuat budget tiap bulan tersimpan terpisah.
+
 ## Login admin
 
 Login admin menggunakan Supabase Auth (email + password) dan tabel `public.profiles` dengan `role = 'ADMIN'`.
