@@ -28,14 +28,40 @@ const supabaseClient = window.supabase?.createClient && supabaseConfig.url && su
   : null;
 const iconFor = (name) => ({ zap: "zap", wifi: "wifi", coins: "coins", wrench: "wrench", sparkles: "sparkles", droplets: "droplets", "shopping-basket": "shopping-basket", wallet: "wallet-cards", shapes: "shapes" }[name] || "circle-dot");
 const formatIDR = (value, spaced = false) => `${spaced ? "Rp " : "Rp"}${Math.round(Number(value) || 0).toLocaleString("id-ID")}`;
+const amountDigits = (value) => String(value ?? "").replace(/\D/g, "");
+const parseAmountInput = (value) => Number(amountDigits(value)) || 0;
+const formatInputAmount = (value) => { const digits = amountDigits(value); return digits ? Number(digits).toLocaleString("id-ID") : ""; };
+function formatAmountInput(input) {
+  const raw = input.value;
+  const caret = input.selectionStart;
+  const digitsBeforeCaret = raw.slice(0, caret ?? raw.length).replace(/\D/g, "").length;
+  input.value = formatInputAmount(raw);
+  if (document.activeElement !== input || caret === null) return;
+  let nextCaret = 0;
+  let seenDigits = 0;
+  while (nextCaret < input.value.length && seenDigits < digitsBeforeCaret) {
+    if (/\d/.test(input.value[nextCaret])) seenDigits += 1;
+    nextCaret += 1;
+  }
+  input.setSelectionRange(nextCaret, nextCaret);
+}
 const formatSigned = (item) => `${item.type === "INCOME" ? "+" : "-"}${formatIDR(item.amount)}`;
 const formatDate = (value) => { if (!value) return ""; const date = new Date(`${value}T00:00:00`); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }); };
 const todayISO = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; };
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[character]));
 const byId = (id) => document.getElementById(id);
 const monthFormatter = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric", timeZone: "UTC" });
+const shortMonthFormatter = new Intl.DateTimeFormat("id-ID", { month: "short", year: "2-digit", timeZone: "UTC" });
 const isMonthKey = (value) => /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 const formatMonthLabel = (month) => monthFormatter.format(new Date(`${month}-01T00:00:00Z`));
+const formatShortMonthLabel = (month) => shortMonthFormatter.format(new Date(`${month}-01T00:00:00Z`));
+const formatCompactIDR = (value) => {
+  const amount = Math.round(Number(value) || 0);
+  if (amount >= 1_000_000_000) return `Rp${(amount / 1_000_000_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} M`;
+  if (amount >= 1_000_000) return `Rp${(amount / 1_000_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} jt`;
+  if (amount >= 1_000) return `Rp${(amount / 1_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} rb`;
+  return formatIDR(amount, true);
+};
 const monthStart = (month) => `${month}-01`;
 const shiftMonth = (month, delta) => {
   const [year, monthNumber] = (isMonthKey(month) ? month : initialMonth).split("-").map(Number);
@@ -43,6 +69,8 @@ const shiftMonth = (month, delta) => {
   return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}`;
 };
 const activeTransactions = () => transactions.filter((item) => String(item.date || "").startsWith(`${activeMonth}-`));
+const emptyStateMarkup = (icon, title, message) => `<div class="empty-state"><i data-lucide="${escapeHTML(icon)}"></i><strong>${escapeHTML(title)}</strong><span>${escapeHTML(message)}</span></div>`;
+const chartColors = ["#ff8f8f", "#83d6ff", "#ffdc4f", "#75e1bd", "#bf9cff", "#f3a15c"];
 function updateMonthUI() {
   const label = formatMonthLabel(activeMonth);
   document.querySelectorAll("[data-month-label]").forEach((element) => { element.textContent = label; });
@@ -145,7 +173,8 @@ function mapTransaction(row) {
 
 function transactionMarkup(item) {
   const metadata = [item.category, formatDate(item.date)].filter(Boolean).join(" · ");
-  return `<div class="transaction-item" data-id="${escapeHTML(item.id)}"><span class="transaction-icon ${item.type === "INCOME" ? "income" : "expense"}"><i data-lucide="${escapeHTML(iconFor(item.icon))}"></i></span><div class="transaction-copy"><strong>${escapeHTML(item.title)}</strong><span>${escapeHTML(metadata)}</span></div><strong class="transaction-amount ${item.type === "INCOME" ? "income" : "expense"}">${escapeHTML(formatSigned(item))}</strong></div>`;
+  const typeLabel = item.type === "INCOME" ? "Pemasukan" : "Pengeluaran";
+  return `<button type="button" class="transaction-item" data-detail-id="${escapeHTML(item.id)}" aria-label="Lihat detail ${escapeHTML(typeLabel.toLowerCase())} ${escapeHTML(item.title)} ${escapeHTML(formatIDR(item.amount, true))}"><span class="transaction-icon ${item.type === "INCOME" ? "income" : "expense"}" aria-hidden="true"><i data-lucide="${escapeHTML(iconFor(item.icon))}"></i></span><span class="transaction-copy"><strong>${escapeHTML(item.title)}</strong><span>${escapeHTML(metadata)}</span></span><strong class="transaction-amount ${item.type === "INCOME" ? "income" : "expense"}" aria-hidden="true">${escapeHTML(formatSigned(item))}</strong></button>`;
 }
 
 function renderTransactions() {
@@ -167,6 +196,83 @@ function renderTransactions() {
   window.lucide?.createIcons();
 }
 
+function totalsForMonth(month) {
+  return transactions.reduce((totals, item) => {
+    if (!String(item.date || "").startsWith(`${month}-`)) return totals;
+    if (item.type === "INCOME") totals.income += Number(item.amount) || 0;
+    if (item.type === "EXPENSE") totals.expense += Number(item.amount) || 0;
+    return totals;
+  }, { income: 0, expense: 0 });
+}
+
+function renderMonthlyCashflow() {
+  const host = byId("monthly-cashflow-chart");
+  if (!host) return;
+  const months = Array.from({ length: 6 }, (_, index) => shiftMonth(activeMonth, index - 5));
+  const totals = months.map((month) => ({ month, ...totalsForMonth(month) }));
+  const hasData = totals.some((item) => item.income || item.expense);
+  const windowLabel = byId("cashflow-window");
+  if (windowLabel) windowLabel.textContent = `${months.length} bulan terakhir`;
+  if (!hasData) {
+    host.innerHTML = emptyStateMarkup("bar-chart-3", "Belum ada data", `Catat transaksi untuk melihat arus kas ${formatMonthLabel(activeMonth)}.`);
+    window.lucide?.createIcons();
+    return;
+  }
+  const maxValue = Math.max(1, ...totals.map((item) => Math.max(item.income, item.expense)));
+  const latest = totals[totals.length - 1];
+  const bars = totals.map((item) => {
+    const incomeHeight = item.income ? Math.max(4, (item.income / maxValue) * 100) : 0;
+    const expenseHeight = item.expense ? Math.max(4, (item.expense / maxValue) * 100) : 0;
+    const currentClass = item.month === activeMonth ? " current" : "";
+    const label = `${formatMonthLabel(item.month)}: pemasukan ${formatIDR(item.income, true)}, pengeluaran ${formatIDR(item.expense, true)}`;
+    return `<div class="bar-group" role="group" aria-label="${escapeHTML(label)}"><div class="bar-pair${currentClass}" aria-hidden="true"><span class="bar income-bar" style="height:${incomeHeight}%" title="Pemasukan ${escapeHTML(formatIDR(item.income, true))}"></span><span class="bar expense-bar" style="height:${expenseHeight}%" title="Pengeluaran ${escapeHTML(formatIDR(item.expense, true))}"></span></div><small aria-hidden="true">${escapeHTML(formatShortMonthLabel(item.month))}</small></div>`;
+  }).join("");
+  host.innerHTML = `<div class="chart-legend" aria-hidden="true"><span><i class="income-swatch"></i>Pemasukan</span><span><i class="expense-swatch"></i>Pengeluaran</span></div><div class="bar-chart" role="img" aria-label="Perbandingan pemasukan dan pengeluaran selama enam bulan"><div class="bar-y" aria-hidden="true"><span>${escapeHTML(formatCompactIDR(maxValue))}</span><span>${escapeHTML(formatCompactIDR(maxValue / 2))}</span><span>Rp 0</span></div><div class="bars">${bars}</div></div><p class="chart-summary">${escapeHTML(formatMonthLabel(activeMonth))}: pemasukan <strong>${escapeHTML(formatIDR(latest.income, true))}</strong>, pengeluaran <strong>${escapeHTML(formatIDR(latest.expense, true))}</strong>.</p>`;
+}
+
+function renderExpenseBreakdown() {
+  const host = byId("expense-breakdown-chart");
+  if (!host) return;
+  const grouped = new Map();
+  activeTransactions().filter((item) => item.type === "EXPENSE").forEach((item) => {
+    grouped.set(item.category || "Lainnya", (grouped.get(item.category || "Lainnya") || 0) + (Number(item.amount) || 0));
+  });
+  const breakdown = [...grouped.entries()].map(([category, amount], index) => ({ category, amount, color: chartColors[index % chartColors.length] })).sort((a, b) => b.amount - a.amount);
+  const total = breakdown.reduce((sum, item) => sum + item.amount, 0);
+  if (!total) {
+    host.innerHTML = emptyStateMarkup("pie-chart", "Belum ada data", `Breakdown biaya ${formatMonthLabel(activeMonth)} akan muncul setelah pengeluaran dicatat.`);
+    window.lucide?.createIcons();
+    return;
+  }
+  let cursor = 0;
+  const gradient = breakdown.map((item) => {
+    const start = cursor;
+    cursor += (item.amount / total) * 100;
+    return `${item.color} ${start}% ${cursor}%`;
+  }).join(", ");
+  const legend = breakdown.map((item) => `<div><i class="legend-swatch" style="background:${item.color}" aria-hidden="true"></i><span>${escapeHTML(item.category)}</span><strong>${escapeHTML(formatIDR(item.amount, true))}</strong></div>`).join("");
+  const summary = breakdown.slice(0, 3).map((item) => `${item.category} ${formatIDR(item.amount, true)}`).join(", ");
+  host.innerHTML = `<div class="report-donut-wrap"><div class="donut large" style="background:conic-gradient(${gradient})" role="img" aria-label="Komposisi pengeluaran ${formatMonthLabel(activeMonth)}: ${escapeHTML(summary)}"><span>${escapeHTML(formatCompactIDR(total))}<small>Total</small></span></div><div class="legend large-legend">${legend}</div></div><p class="chart-summary">Total pengeluaran ${escapeHTML(formatIDR(total, true))}. Terbesar: ${escapeHTML(summary)}.</p>`;
+}
+
+function renderExpenseHighlight() {
+  const host = byId("expense-highlight");
+  if (!host) return;
+  const expenses = activeTransactions().filter((item) => item.type === "EXPENSE").sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0));
+  if (!expenses.length) {
+    host.innerHTML = emptyStateMarkup("receipt", "Belum ada pengeluaran", `Belum ada pengeluaran di ${formatMonthLabel(activeMonth)}.`);
+    window.lucide?.createIcons();
+    return;
+  }
+  const rows = expenses.slice(0, 3).map((item) => `<button type="button" class="highlight-item" data-detail-id="${escapeHTML(item.id)}" aria-label="Lihat detail pengeluaran ${escapeHTML(item.title)} ${escapeHTML(formatIDR(item.amount, true))}"><span class="highlight-copy"><strong>${escapeHTML(item.title)}</strong><small>${escapeHTML(item.category)} · ${escapeHTML(formatDate(item.date))}</small></span><strong class="transaction-amount expense">-${escapeHTML(formatIDR(item.amount))}</strong></button>`).join("");
+  host.innerHTML = `<div class="expense-highlight-list">${rows}</div>${expenses.length > 3 ? `<p class="chart-summary">Menampilkan 3 pengeluaran terbesar dari ${expenses.length} transaksi.</p>` : ""}`;
+}
+
+function renderReports() {
+  renderMonthlyCashflow();
+  renderExpenseBreakdown();
+}
+
 function renderSummary() {
   const visibleTransactions = activeTransactions();
   const income = visibleTransactions.filter((item) => item.type === "INCOME").reduce((sum, item) => sum + item.amount, 0);
@@ -179,6 +285,15 @@ function renderSummary() {
   byId("expense-total").textContent = formatIDR(expense, true);
   byId("net-value").textContent = formatIDR(net, true);
   byId("transaction-status").textContent = visibleTransactions.length ? `${visibleTransactions.length} transaksi tercatat` : "Belum ada transaksi";
+  const previousNet = totalsForMonth(shiftMonth(activeMonth, -1));
+  const netContext = byId("net-context");
+  if (netContext) {
+    const previousValue = previousNet.income - previousNet.expense;
+    netContext.textContent = !visibleTransactions.length && !previousValue ? "Belum ada data pembanding" : previousValue ? `${net >= previousValue ? "Naik" : "Turun"} ${formatIDR(Math.abs(net - previousValue), true)} dari bulan lalu` : "Bulan sebelumnya belum ada transaksi";
+  }
+  renderReports();
+  renderExpenseHighlight();
+  window.lucide?.createIcons();
 }
 
 function renderBudget() {
@@ -187,8 +302,9 @@ function renderBudget() {
   byId("budget-total-amount").textContent = formatIDR(total, true);
   byId("budget-status").textContent = total ? (budgetMonthSupported ? "alokasi aktif" : "perlu migrasi") : "belum diatur";
   document.querySelectorAll("[data-budget-value]").forEach((element) => { element.textContent = formatIDR(values[element.dataset.budgetValue] || 0, true); });
-  document.querySelectorAll("[data-budget-input]").forEach((input) => { input.value = values[input.dataset.budgetInput] || 0; });
-  byId("contribution-total").value = total;
+  document.querySelectorAll("[data-budget-row]").forEach((row) => { const name = row.dataset.budgetRow; const label = row.querySelector(".bill-name")?.textContent?.trim() || name; row.setAttribute("aria-label", `${label}: ${formatIDR(values[name] || 0, true)}`); });
+  document.querySelectorAll("[data-budget-input]").forEach((input) => { input.value = formatInputAmount(values[input.dataset.budgetInput] || 0); });
+  byId("contribution-total").value = formatInputAmount(total);
   byId("breakdown-total").textContent = formatIDR(total, true);
 }
 
@@ -273,6 +389,48 @@ function showToast(message) {
   showToast.timer = setTimeout(() => byId("toast").classList.remove("is-visible"), 2800);
 }
 
+let lastDetailTrigger = null;
+
+function toggleDetailModal(open) {
+  const modal = byId("transaction-detail-modal");
+  if (!modal) return;
+  modal.classList.toggle("is-open", open);
+  modal.setAttribute("aria-hidden", String(!open));
+  if (open) setTimeout(() => byId("close-detail-modal")?.focus(), 80);
+  else lastDetailTrigger?.focus();
+}
+
+function showTransactionDetail(id, trigger = null) {
+  const item = transactions.find((transaction) => String(transaction.id) === String(id));
+  if (!item) return;
+  lastDetailTrigger = trigger;
+  const typeLabel = item.type === "INCOME" ? "Pemasukan" : "Pengeluaran";
+  const detailBody = byId("transaction-detail-body");
+  if (!detailBody) return;
+  detailBody.innerHTML = `<div class="detail-heading"><span class="detail-type ${item.type === "INCOME" ? "income" : "expense"}">${typeLabel}</span><strong class="detail-amount ${item.type === "INCOME" ? "income" : "expense"}">${escapeHTML(formatSigned(item))}</strong></div><dl class="detail-list"><div><dt>Judul</dt><dd>${escapeHTML(item.title)}</dd></div><div><dt>Kategori</dt><dd>${escapeHTML(item.category || "Lainnya")}</dd></div><div><dt>Tanggal</dt><dd>${escapeHTML(formatDate(item.date))}</dd></div><div><dt>Catatan</dt><dd>${escapeHTML(item.description || "Tidak ada catatan")}</dd></div></dl>`;
+  toggleDetailModal(true);
+}
+
+const csvCell = (value) => `"${String(value ?? "").replace(/"/g, "\"\"")}"`;
+function exportReport() {
+  const items = activeTransactions();
+  if (!items.length) return showToast(`Belum ada transaksi ${formatMonthLabel(activeMonth)} untuk diekspor.`);
+  const rows = [
+    ["Tanggal", "Tipe", "Kategori", "Judul", "Nominal", "Catatan"],
+    ...items.map((item) => [item.date, item.type === "INCOME" ? "Pemasukan" : "Pengeluaran", item.category, item.title, item.amount, item.description])
+  ];
+  const csv = `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `kasteds-${activeMonth}.csv`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+  showToast(`Laporan ${formatMonthLabel(activeMonth)} berhasil diunduh.`);
+}
+
 function toggleModal(open, type = "INCOME") {
   const modal = byId("transaction-modal");
   modal.classList.toggle("is-open", open);
@@ -295,6 +453,9 @@ document.addEventListener("click", async (event) => {
   }
   const addButton = event.target.closest("[data-open-add]");
   if (addButton) return isAdmin() ? toggleModal(true, addButton.dataset.openAdd) : showLogin();
+  const detailButton = event.target.closest("[data-detail-id]");
+  if (detailButton) return showTransactionDetail(detailButton.dataset.detailId, detailButton);
+  if (event.target.closest("#close-detail-modal, #detail-cancel") || event.target.id === "transaction-detail-modal") return toggleDetailModal(false);
   if (event.target.closest("#close-modal, #cancel-modal") || event.target.id === "transaction-modal") toggleModal(false);
   const typeButton = event.target.closest(".segmented button");
   if (typeButton) {
@@ -302,13 +463,20 @@ document.addEventListener("click", async (event) => {
   }
 });
 
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (byId("transaction-detail-modal")?.classList.contains("is-open")) toggleDetailModal(false);
+  else if (byId("transaction-modal")?.classList.contains("is-open")) toggleModal(false);
+});
+
 byId("previous-month")?.addEventListener("click", () => setActiveMonth(shiftMonth(activeMonth, -1)));
 byId("next-month")?.addEventListener("click", () => setActiveMonth(shiftMonth(activeMonth, 1)));
+byId("export-report")?.addEventListener("click", exportReport);
 
 byId("transaction-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!isAdmin()) return showLogin();
-  const amount = Number(byId("transaction-amount").value);
+  const amount = parseAmountInput(byId("transaction-amount").value);
   const title = byId("transaction-title").value.trim();
   const date = byId("transaction-date").value;
   const categoryName = byId("transaction-category").value;
@@ -335,16 +503,18 @@ byId("transaction-form").addEventListener("submit", async (event) => {
 
 const filterInputs = ["transaction-search", "type-filter", "category-filter"].map(byId);
 filterInputs.forEach((input) => { input.addEventListener("input", renderTransactions); input.addEventListener("change", renderTransactions); });
+byId("transaction-amount").addEventListener("input", () => formatAmountInput(byId("transaction-amount")));
 document.querySelectorAll(".breakdown-value").forEach((input) => input.addEventListener("input", () => {
-  const total = [...document.querySelectorAll(".breakdown-value")].reduce((sum, field) => sum + Number(field.value || 0), 0);
+  formatAmountInput(input);
+  const total = [...document.querySelectorAll(".breakdown-value")].reduce((sum, field) => sum + parseAmountInput(field.value), 0);
   byId("breakdown-total").textContent = formatIDR(total, true);
-  byId("contribution-total").value = total;
+  byId("contribution-total").value = formatInputAmount(total);
 }));
 
 byId("save-settings").addEventListener("click", async () => {
   if (!isAdmin()) return showLogin();
   if (!budgetMonthSupported) return showToast("Jalankan supabase/schema.sql dulu untuk mengaktifkan budget per bulan.");
-  const rows = [...document.querySelectorAll("[data-budget-input]")].map((input) => ({ name: input.dataset.budgetInput, month: monthStart(activeMonth), amount: Math.max(0, Number(input.value) || 0), active: true, updated_at: new Date().toISOString() }));
+  const rows = [...document.querySelectorAll("[data-budget-input]")].map((input) => ({ name: input.dataset.budgetInput, month: monthStart(activeMonth), amount: Math.max(0, parseAmountInput(input.value)), active: true, updated_at: new Date().toISOString() }));
   const { data, error } = await supabaseClient.from("budget_items").upsert(rows, { onConflict: "name,month" }).select("id,name,amount,active,month");
   if (error) {
     if (/month/i.test(error.message || "")) {
@@ -389,5 +559,5 @@ restoreSession().catch((error) => {
 });
 
 // ponytail: one small smoke check keeps the currency rule from silently regressing.
-window.__KASTEDS_CHECK__ = () => { console.assert(formatIDR(370000) === "Rp370.000", "Currency formatting must use id-ID grouping"); console.assert(shiftMonth("2026-09", 1) === "2026-10", "Month navigation must roll forward safely"); console.assert(Array.isArray(transactions), "Transactions must stay an array"); };
+window.__KASTEDS_CHECK__ = () => { console.assert(formatIDR(370000) === "Rp370.000", "Currency formatting must use id-ID grouping"); console.assert(formatInputAmount("370000") === "370.000", "Input currency formatting must use id-ID grouping"); console.assert(parseAmountInput("370.000") === 370000, "Formatted currency must parse back to a number"); console.assert(formatCompactIDR(1200000) === "Rp1,2 jt", "Chart axis must use compact IDR formatting"); console.assert(shiftMonth("2026-09", 1) === "2026-10", "Month navigation must roll forward safely"); console.assert(Array.isArray(transactions), "Transactions must stay an array"); };
 window.__KASTEDS_CHECK__();

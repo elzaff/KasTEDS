@@ -352,3 +352,62 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .topbar-actions { gap: 3px; }
   .month-switcher span { min-width: 70px; }
 }
+
+/* === DATA STATES AND INTERACTION === */
+.chart-region { min-height: 248px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.chart-region > .empty-state { min-height: 248px; padding: 42px 16px; }
+.chart-window { align-self: flex-start; padding: 5px 9px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font-size: 10px; font-weight: 800; white-space: nowrap; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 2px; }
+.chart-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.chart-legend i { width: 8px; height: 8px; margin-left: 0; border-radius: 3px; }
+.chart-region .bar-chart { height: 210px; margin-top: 13px; }
+.chart-region .bar-group { min-width: 0; }
+.chart-region .bars { min-width: 0; }
+.chart-region .bar { min-height: 0; transition: height 180ms ease-out; }
+.chart-summary { margin-top: 14px; color: var(--color-text-muted); font-size: 11px; line-height: 1.5; }
+.chart-summary strong { color: var(--color-text-secondary); font-size: inherit; }
+.donut { position: relative; }
+.report-donut-wrap { min-width: 0; }
+.large-legend { min-width: 0; }
+.large-legend > div { min-width: 0; }
+.large-legend > div span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.transaction-item { width: 100%; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.table-card .transaction-item::after { content: none; display: none; }
+.transaction-item:hover { background: var(--color-surface-tint); }
+.transaction-item:focus-visible { position: relative; z-index: 1; border-radius: 10px; outline: 3px solid rgb(255 200 0 / 52%); outline-offset: -2px; }
+.detail-modal { max-width: 520px; }
+.detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 0 19px; border-bottom: 1px solid var(--color-border); }
+.detail-type { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 800; }
+.detail-type.income { color: var(--color-income); background: var(--color-income-bg); }
+.detail-type.expense { color: var(--color-expense); background: var(--color-expense-bg); }
+.detail-amount { font-size: 23px; white-space: nowrap; }
+.detail-amount.income { color: var(--color-income); }
+.detail-amount.expense { color: var(--color-expense); }
+.detail-list { display: grid; gap: 0; margin: 0; }
+.detail-list > div { display: grid; grid-template-columns: 90px 1fr; gap: 15px; padding: 13px 0; border-bottom: 1px solid var(--color-border); }
+.detail-list > div:last-child { border-bottom: 0; }
+.detail-list dt { color: var(--color-text-muted); font-size: 11px; font-weight: 800; }
+.detail-list dd { min-width: 0; margin: 0; color: var(--color-text-primary); font-size: 13px; overflow-wrap: anywhere; }
+.expense-highlight-list { display: grid; gap: 2px; margin-top: 17px; }
+.highlight-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 10px 0; border-bottom: 1px solid var(--color-border); color: inherit; background: transparent; text-align: left; }
+.highlight-item:last-child { border-bottom: 0; }
+.highlight-item:hover { color: var(--color-primary-pressed); }
+.highlight-item:focus-visible { border-radius: 8px; outline: 3px solid rgb(255 200 0 / 52%); outline-offset: 2px; }
+.highlight-copy { min-width: 0; }
+.highlight-copy strong, .highlight-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.highlight-copy strong { font-size: 12px; }
+.highlight-copy small { margin-top: 2px; color: var(--color-text-muted); font-size: 10px; }
+
+@media (max-width: 520px) {
+  .chart-card .card-heading { align-items: flex-start; }
+  .chart-window { font-size: 9px; }
+  .chart-region .bar-chart { height: 190px; gap: 8px; }
+  .chart-region .bar-y { display: none; }
+  .chart-region .bars { padding-left: 0; }
+  .chart-region .bar { width: 9px; }
+  .chart-region .report-donut-wrap { flex-direction: column; align-items: stretch; gap: 20px; }
+  .chart-region .donut.large { align-self: center; }
+  .detail-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .detail-amount { font-size: 21px; }
+  .detail-list > div { grid-template-columns: 76px 1fr; gap: 10px; }
+}
