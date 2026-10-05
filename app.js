@@ -4,8 +4,10 @@ let categories = [];
 let currentSession = null;
 let currentUser = null;
 let currentProfile = null;
-const initialMonth = "2026-09";
+const currentMonthKey = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`; };
+const initialMonth = currentMonthKey();
 let activeMonth = initialMonth;
+let homeMonth = initialMonth;
 let budgetMonthSupported = true;
 const openingBalance = 0;
 const fallbackCategories = [
@@ -482,6 +484,13 @@ document.addEventListener("keydown", (event) => {
 
 byId("previous-month")?.addEventListener("click", () => setActiveMonth(shiftMonth(activeMonth, -1)));
 byId("next-month")?.addEventListener("click", () => setActiveMonth(shiftMonth(activeMonth, 1)));
+// Tab left open across a month boundary: follow the new month unless the user browsed to another one.
+document.addEventListener("visibilitychange", () => {
+  const month = currentMonthKey();
+  if (document.hidden || month === homeMonth) return;
+  if (activeMonth === homeMonth) setActiveMonth(month);
+  homeMonth = month;
+});
 byId("export-report")?.addEventListener("click", exportReport);
 
 byId("transaction-form").addEventListener("submit", async (event) => {
